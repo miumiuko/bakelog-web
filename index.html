@@ -1,0 +1,379 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#2E6B5B">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
+<title>烘焙紀錄本</title>
+<link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+<header class="top">
+  <div class="top-in">
+    <button class="back" data-view="list" id="btn-back" hidden aria-label="回到列表">‹</button>
+    <h1 class="brand">烘焙紀錄本</h1>
+    <span class="save-state" id="save-state" aria-live="polite"></span>
+  </div>
+</header>
+
+<main>
+  <!-- 列表 -->
+  <section id="view-list">
+    <div id="banners"></div>
+    <div class="list-tools">
+      <input class="search" id="search" type="search" placeholder="搜尋品名、種類、材料、狀況或備註" aria-label="搜尋紀錄">
+      <button class="btn btn-sm" data-act="lan-sync" id="btn-lan-sync" hidden>同步</button>
+      <div class="seg" role="group" aria-label="列表檢視">
+        <button data-mode="list" aria-pressed="true">清單</button>
+        <button data-mode="grid" aria-pressed="false">照片牆</button>
+      </div>
+    </div>
+    <p class="lan-progress" hidden aria-live="polite"></p>
+    <div class="chips filter" id="type-filter" role="group" aria-label="依麵包種類篩選"></div>
+    <ul class="bake-list" id="bake-list"></ul>
+    <div class="empty" id="list-empty" hidden>
+      <p id="empty-text">還沒有任何紀錄。</p>
+      <button class="btn btn-primary" data-act="new" id="empty-new">開始一筆新紀錄</button>
+    </div>
+  </section>
+
+  <!-- 編輯 -->
+  <section id="view-edit" hidden>
+    <div class="edit-head">
+      <button class="head-cover" data-act="goto-photos" aria-label="封面，點一下跳到照片區" id="head-cover"></button>
+      <div class="head-main">
+        <input class="name-input" data-path="name" list="name-list" placeholder="品名，例如核桃葡萄乾" aria-label="品名" autocomplete="off">
+        <input class="date-input" type="date" data-path="date" aria-label="日期">
+      </div>
+    </div>
+    <div class="chips" id="bread-type" role="group" aria-label="麵包種類"></div>
+    <label class="fld other-type" id="bread-other-wrap" hidden>其他種類<span class="fld-in"><input data-path="breadTypeOther" placeholder="例如佛卡夏" autocomplete="off"></span></label>
+    <datalist id="name-list"></datalist>
+    <datalist id="brand-list"></datalist>
+    <datalist id="ing-list"></datalist>
+
+    <div class="summary" id="summary">
+      <div class="sum"><span>水量</span><b id="s-hyd">—</b></div>
+      <div class="sum"><span>酵種</span><b id="s-lev">—</b></div>
+      <div class="sum"><span>燒減率</span><b id="s-loss">—</b></div>
+      <div class="sum"><span>配方分類</span><b class="small" id="s-cls">—</b></div>
+      <div class="sum"><span>基發</span><b class="small" id="s-bulk">—</b></div>
+      <div class="sum"><span>後發</span><b class="small" id="s-proof">—</b></div>
+      <div class="sum" data-pan-only hidden><span>蛋黃</span><b id="s-yolk">—</b></div>
+      <div class="sum" data-pan-only hidden><span>奶油</span><b id="s-butter">—</b></div>
+    </div>
+
+    <div id="recipe">
+    <section class="card" id="card-flour1" hidden>
+      <h2>麵粉｜第一麵團 <span class="hint" id="flour1-total"></span></h2>
+      <div id="flours-1"></div>
+      <div class="blend" id="blend-1" aria-hidden="true"></div>
+      <button class="btn btn-sm" data-act="add-flour" data-stage="first">加一種粉</button>
+    </section>
+
+    <section class="card" id="card-liquid1" hidden>
+      <h2><span><span class="t-long">水、蛋黃、奶油與糖</span><span class="t-short">水分與油脂</span>｜第一麵團</span></h2>
+      <p class="banner-inline" id="pan-check-hint" hidden>這筆是升級前的 Panettone。舊的「後水」「其他液體」已移到其他材料（計入水量），請確認蛋黃與奶油欄位：是蛋黃或奶油就把數字填到這裡，再刪掉那一列。<button class="btn btn-sm" type="button" data-act="confirm-pan">已確認</button></p>
+      <div class="grid2">
+        <div class="fld">
+          <label for="p1-water">水</label>
+          <span class="fld-in"><input type="number" inputmode="decimal" id="p1-water" data-path="panettone.first.water"><em>g</em></span>
+          <div class="chips mini wtype" data-wtype="panettone.first.waterType" role="group" aria-label="第一麵團水質"></div>
+        </div>
+        <label class="fld">蛋黃<span class="fld-in"><input type="number" inputmode="decimal" data-path="panettone.first.yolk"><em>g</em></span></label>
+        <label class="fld">奶油<span class="fld-in"><input type="number" inputmode="decimal" data-path="panettone.first.butter"><em>g</em></span></label>
+        <label class="fld">糖<span class="fld-in"><input type="number" inputmode="decimal" step="0.1" data-path="panettone.first.sugar"><em>g</em></span></label>
+      </div>
+      <p class="calc" id="pan1-calc"></p>
+      <p class="hint">水量只算水（含其他材料勾選「計入水量」的），蛋黃與奶油不計入。百分比以兩個麵團的總粉量計算。第二麵團若也加糖，記在「其他材料」（分類：糖／甜味）。</p>
+    </section>
+
+    <section class="card" id="card-flour">
+      <h2><span id="flour-title">麵粉</span> <span class="hint" id="flour-total"></span></h2>
+      <p class="banner-inline" id="flour-stage-hint" hidden></p>
+      <div id="flours"></div>
+      <div class="blend" id="blend" aria-hidden="true"></div>
+      <button class="btn btn-sm" data-act="add-flour" data-stage="second">加一種粉</button>
+      <p class="hint" id="cls-line"></p>
+    </section>
+
+    <section class="card" id="card-leaven">
+      <h2>酵種</h2>
+      <div class="chips" id="leaven-type" role="group" aria-label="酵種種類"></div>
+      <p class="hint" id="leaven-hint">先選酵種種類。</p>
+      <div id="leaven-body">
+        <div class="grid2">
+          <label class="fld span2" data-show="wild">準備方式
+            <span class="fld-in"><select data-path="levain.state" id="lev-state"></select></span></label>
+          <label class="fld" data-show="wild">投入時倍數<span class="fld-in"><input type="number" inputmode="decimal" step="0.1" data-path="levain.rise"><em>倍</em></span></label>
+          <div class="fld" data-show="temp">
+            <label for="lev-temp">發酵溫度</label>
+            <span class="fld-in"><input type="number" inputmode="decimal" step="0.5" min="0" max="40" id="lev-temp" data-path="levain.temp" data-range="0-40" placeholder="0–40"><em>°C</em></span>
+            <span class="err" hidden>請填 0–40</span>
+            <small class="sub">多階段餵養填主要階段或平均溫度；冷藏隔夜填室溫階段的溫度</small>
+          </div>
+          <label class="fld" data-show="wild">魯邦重量<span class="fld-in"><input type="number" inputmode="decimal" data-path="levain.g" data-lev-g><em>g</em></span></label>
+          <label class="fld span2" data-show="wild">餵養比例（魯邦：粉：水）<span class="fld-in"><input data-path="levain.ratio" list="ratio-list" placeholder="例如 1:2:2" autocomplete="off"></span></label>
+          <label class="fld" data-show="yeast">商業酵母種類<span class="fld-in"><select data-path="yeast.kind" id="yeast-kind"></select></span></label>
+          <label class="fld" data-show="yeast">商業酵母重量<span class="fld-in"><input type="number" inputmode="decimal" step="0.1" data-path="yeast.g"><em>g</em></span></label>
+          <label class="fld span2" data-show="pref">前種重量（波蘭種、老麵；直接法留空）<span class="fld-in"><input type="number" inputmode="decimal" data-path="levain.g" data-lev-g><em>g</em></span></label>
+          <div class="fld span2">
+            <label for="lev-hyd">酵種水分比</label>
+            <div class="hyd-row">
+              <span class="fld-in" id="lev-hyd-wrap"><input type="number" inputmode="decimal" min="35" max="100" step="1" id="lev-hyd" placeholder="35–100"><em>%</em></span>
+              <div class="chips mini" id="hyd-chips"></div>
+            </div>
+            <span class="err" id="lev-hyd-err" hidden>請填 35–100</span>
+          </div>
+        </div>
+        <datalist id="ratio-list"><option value="1:1:1"><option value="1:2:2"><option value="1:3:3"><option value="1:5:5"><option value="1:2:2 → 1:5:5"></datalist>
+        <p class="hint" data-show="wild">多階段餵養可以用「→」把每一階段連起來，例如 1:2:2 → 1:5:5。</p>
+        <p class="calc" id="lev-calc"></p>
+      </div>
+    </section>
+
+    <section class="card" id="card-liquid">
+      <h2 id="liquid-title-plain">液體與鹽</h2>
+      <h2 id="liquid-title-pan" hidden><span><span class="t-long">水、蛋黃、奶油與鹽</span><span class="t-short">水分與油脂</span>｜第二麵團（主麵團）</span></h2>
+      <div class="row-label">混合法</div>
+      <div class="chips" id="mix-method" role="group" aria-label="混合法"></div>
+      <div class="grid2" id="liquid-pan" hidden>
+        <div class="fld">
+          <label for="p2-water">水</label>
+          <span class="fld-in"><input type="number" inputmode="decimal" id="p2-water" data-path="panettone.second.water"><em>g</em></span>
+          <div class="chips mini wtype" data-wtype="panettone.second.waterType" role="group" aria-label="第二麵團水質"></div>
+        </div>
+        <label class="fld">蛋黃<span class="fld-in"><input type="number" inputmode="decimal" data-path="panettone.second.yolk"><em>g</em></span></label>
+        <label class="fld">奶油<span class="fld-in"><input type="number" inputmode="decimal" data-path="panettone.second.butter"><em>g</em></span></label>
+        <label class="fld">鹽<span class="fld-in"><input type="number" inputmode="decimal" step="0.1" data-path="panettone.second.salt"><em>g</em></span></label>
+      </div>
+      <p class="calc" id="pan2-calc" hidden></p>
+      <div class="grid2" id="liquid-plain">
+        <div class="fld">
+          <label for="w-main">水合水</label>
+          <span class="fld-in"><input type="number" inputmode="decimal" id="w-main" data-path="water.main"><em>g</em></span>
+          <div class="chips mini wtype" data-wtype="water.mainType" role="group" aria-label="水合水水質"></div>
+        </div>
+        <div class="fld">
+          <label for="w-bass">後水</label>
+          <span class="fld-in"><input type="number" inputmode="decimal" id="w-bass" data-path="water.bass"><em>g</em></span>
+          <div class="chips mini wtype" data-wtype="water.bassType" role="group" aria-label="後水水質"></div>
+        </div>
+        <label class="fld">鹽<span class="fld-in"><input type="number" inputmode="decimal" step="0.1" data-path="salt"><em>g</em></span></label>
+      </div>
+      <p class="hint" id="liquid-plain-hint">牛奶、啤酒等其他液體請記在其他材料，勾選計入水量。水量只算主麵團的自由液體，不含酵種裡的水、蛋、鮮奶油和果泥。水質只做紀錄，不影響計算。</p>
+      <p class="banner-inline" id="liquid-hidden-hint" hidden></p>
+    </section>
+
+    <section class="card" id="card-ing">
+      <h2>其他材料 <span class="hint" id="ing-total"></span></h2>
+      <div id="ingredients"></div>
+      <button class="btn btn-sm" data-act="add-ing">加一種材料</button>
+      <p class="hint">抹茶粉、可可粉、堅果、果乾、奶油、蛋、蜂蜜等。輸入常用材料的名稱會自動帶入分類。</p>
+    </section>
+    </div>
+
+    <section class="card">
+      <h2>時間軸</h2>
+      <div class="steps" id="steps"></div>
+      <div class="durs">
+        <label class="fld" id="m-first-wrap" hidden>第一麵團發酵<span class="fld-in"><input type="number" inputmode="decimal" step="0.25" data-path="manual.firstDough" id="m-first"><em>小時</em></span></label>
+        <label class="fld"><span id="m-bulk-label">基發時長</span><span class="fld-in"><input type="number" inputmode="decimal" step="0.25" data-path="manual.bulk" id="m-bulk"><em>小時</em></span></label>
+        <label class="fld">室溫後發<span class="fld-in"><input type="number" inputmode="decimal" step="0.25" data-path="manual.room" id="m-room"><em>小時</em></span></label>
+        <label class="fld">冷藏後發<span class="fld-in"><input type="number" inputmode="decimal" step="0.25" data-path="manual.cold" id="m-cold"><em>小時</em></span></label>
+      </div>
+      <p class="hint" id="durs-hint">時長會依打卡時間自動算出，顯示在欄位裡的淡色數字。直接填數字可以覆寫。每一步可以記下當時量到的溫度；出缸的溫度就是下方的出缸溫。</p>
+    </section>
+
+    <section class="card">
+      <h2>溫度與發酵</h2>
+      <div class="grid2">
+        <div class="fld">
+          <label for="t-dough">出缸溫</label>
+          <span class="fld-in"><input type="number" inputmode="decimal" step="0.1" min="0" max="100" id="t-dough" data-path="temps.dough" data-range="0-100"><em>°C</em></span>
+          <span class="err" hidden>請填 0–100</span>
+        </div>
+        <div class="fld">
+          <label for="t-bulkmax">基發最高溫</label>
+          <div class="fill-row"><span class="fld-in"><input type="number" inputmode="decimal" step="0.1" id="t-bulkmax" data-path="temps.bulkMax"><em>°C</em></span><button class="btn btn-sm" type="button" data-act="fill-bulkmax" id="btn-fill-bulkmax" hidden>帶入</button></div>
+          <small class="sub" id="bulkmax-sub" hidden></small>
+        </div>
+        <label class="fld">整形前倍數<span class="fld-in"><input type="number" inputmode="decimal" step="0.1" data-path="shapeRise"><em>倍</em></span></label>
+        <label class="fld">冷藏溫度<span class="fld-in"><input type="number" inputmode="decimal" step="0.5" data-path="temps.fridge"><em>°C</em></span></label>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>折疊 <span class="hint" id="fold-total"></span></h2>
+      <div class="counters">
+        <div class="counter"><span>Lamination</span><div><button data-act="dec" data-k="lam" aria-label="Lamination 減一">−</button><output id="c-lam">0</output><button data-act="inc" data-k="lam" aria-label="Lamination 加一">+</button></div></div>
+        <div class="counter"><span>CF</span><div><button data-act="dec" data-k="cf" aria-label="CF 減一">−</button><output id="c-cf">0</output><button data-act="inc" data-k="cf" aria-label="CF 加一">+</button></div></div>
+        <div class="counter"><span>HCF</span><div><button data-act="dec" data-k="hcf" aria-label="HCF 減一">−</button><output id="c-hcf">0</output><button data-act="inc" data-k="hcf" aria-label="HCF 加一">+</button></div></div>
+        <div class="counter"><span>SF</span><div><button data-act="dec" data-k="sf" aria-label="SF 減一">−</button><output id="c-sf">0</output><button data-act="inc" data-k="sf" aria-label="SF 加一">+</button></div></div>
+      </div>
+      <div id="hand-folds" hidden>
+        <p class="banner-inline" id="hand-hint" hidden>混合法不是手作，以下次數不會匯出。</p>
+        <div class="counters">
+          <div class="counter"><span>slap and fold</span><div><button data-act="dec" data-k="slap" aria-label="slap and fold 減一">−</button><output id="c-slap">0</output><button data-act="inc" data-k="slap" aria-label="slap and fold 加一">+</button></div></div>
+          <div class="counter"><span>Rubaud Method（撈）</span><div><button data-act="dec" data-k="rubaud" aria-label="Rubaud 減一">−</button><output id="c-rubaud">0</output><button data-act="inc" data-k="rubaud" aria-label="Rubaud 加一">+</button></div></div>
+        </div>
+      </div>
+      <ul class="fold-log" id="fold-log"></ul>
+      <p class="hint" id="fold-gap"></p>
+      <p class="hint">每按一次＋就記下當下時間，時間可以在清單裡修改；按−會移除該種最後一次。CF 含 strong、light、long。總折疊數＝Lam＋CF＋HCF；SF、slap and fold、Rubaud 另計。</p>
+    </section>
+
+    <section class="card">
+      <h2>烘烤</h2>
+      <div class="grid2">
+        <label class="fld">烤前重<span class="fld-in"><input type="number" inputmode="decimal" data-path="weights.before"><em>g</em></span></label>
+        <label class="fld">烤後重<span class="fld-in"><input type="number" inputmode="decimal" data-path="weights.after"><em>g</em></span></label>
+      </div>
+    </section>
+
+    <section class="card" id="photo-card">
+      <h2>照片</h2>
+      <div class="photo-btns">
+        <button class="btn btn-sm" data-act="shoot" data-kind="外觀">拍外觀</button>
+        <button class="btn btn-sm" data-act="shoot" data-kind="切面">拍切面</button>
+        <button class="btn btn-sm" data-act="shoot" data-kind="過程">拍過程</button>
+        <button class="btn btn-sm btn-ghost" data-act="pick-photo">從相簿選</button>
+      </div>
+      <input type="file" accept="image/*" capture="environment" id="file-cam" hidden>
+      <input type="file" accept="image/*" multiple id="file-pick" hidden>
+      <p class="uploading" id="uploading" hidden>照片處理中…</p>
+      <p class="hint" id="cover-hint" hidden>還沒有設定封面，點照片上的 ☆ 設定。</p>
+      <div class="photos" id="photos"></div>
+      <p class="hint">檔名依設定裡的規則自動產生，也可以在照片下方直接改。</p>
+    </section>
+
+    <section class="card">
+      <h2>結果</h2>
+      <div class="issues" id="issues" role="group" aria-label="狀況"></div>
+      <div class="chips mini crumb" id="crumb-type" role="group" aria-label="open crumb 類型" hidden></div>
+      <label class="fld">備註<textarea data-path="note" placeholder="外觀、氣孔、口感，下次想改什麼"></textarea></label>
+    </section>
+
+    <div class="actions">
+      <button class="btn btn-primary" data-act="toggle-done" id="btn-done">標記完成</button>
+      <button class="btn" data-act="sync-one" id="btn-sync-one" hidden>同步到 Obsidian</button>
+      <button class="btn" data-act="export-one">匯出到 Obsidian</button>
+      <span class="spacer"></span>
+      <button class="btn btn-danger" data-act="delete">刪除這筆</button>
+    </div>
+  </section>
+
+  <!-- 設定 -->
+  <section id="view-settings" hidden>
+    <p class="banner" id="vault-unsupported" hidden>此瀏覽器不支援直接選取 Obsidian vault 資料夾；請匯出 Obsidian zip，再解壓到 vault。</p>
+    <section class="card" id="notice-card" hidden>
+      <h2>升級完成</h2>
+      <div id="notice-text"></div>
+      <button class="btn btn-sm" data-act="dismiss-notice">知道了</button>
+    </section>
+
+    <section class="card" id="lan-card" hidden>
+      <h2 id="lan-title">與 Mac 同步</h2>
+      <p class="lan-progress" hidden aria-live="polite"></p>
+      <div id="lan-body"></div>
+    </section>
+
+    <section class="card" id="ios-card" hidden>
+      <h2>這個版本</h2>
+      <p class="big-line" id="expiry-line"></p>
+      <div class="note-box">
+        <strong>App 打不開時，不要刪除 App。</strong>
+        <p>免費 Apple ID 安裝的 App 大約 7 天會到期。到期後資料都還在，只要把 iPhone 接上 Mac 重新安裝（<code>npm run ios:install</code>），紀錄和照片都會保留。刪除 App 會連同所有紀錄一起刪掉。</p>
+      </div>
+    </section>
+
+    <section class="card" id="vault-card" hidden>
+      <h2>Obsidian vault</h2>
+      <div class="vault-path" id="vault-path">尚未選擇</div>
+      <div class="btn-row">
+        <button class="btn btn-sm" data-act="pick-vault" id="btn-pick-vault">選擇資料夾</button>
+        <button class="btn btn-sm btn-primary" data-act="sync-all">全部同步</button>
+      </div>
+      <div class="grid2 gap-top">
+        <label class="fld">筆記子資料夾<span class="fld-in"><input data-vault="subdir" spellcheck="false"></span></label>
+        <label class="fld">附件資料夾<span class="fld-in"><input data-vault="attachDir" spellcheck="false"></span></label>
+      </div>
+      <label class="check"><input type="checkbox" data-vault="makeBase"> 產生 Bases 總覽（烘焙紀錄總覽.base）</label>
+      <p class="hint">只有按下「同步」時才會寫入。會覆寫的只有這個 App 寫出的筆記（frontmatter 有相同 bake_id）；同名的手寫筆記不會被覆寫，改存成「-2」。改名後的舊檔會移到 vault 的 .trash。Obsidian 沒有 Bases 時可以關掉 Bases 總覽。</p>
+    </section>
+
+    <section class="card">
+      <h2>照片檔名</h2>
+      <div class="set-row">
+        <label class="fld">命名規則<span class="fld-in"><input id="set-pattern" data-set="photoPattern" spellcheck="false"></span></label>
+        <div class="tokens" id="tokens">
+          <button data-token="{日期}">{日期}</button><button data-token="{品名}">{品名}</button><button data-token="{類型}">{類型}</button><button data-token="{序號}">{序號}</button><button data-token="{時間}">{時間}</button>
+        </div>
+        <p class="preview">範例：<b id="pattern-preview">—</b></p>
+      </div>
+      <div class="set-row">
+        <label class="fld">筆記檔名規則<span class="fld-in"><input id="set-note" data-set="notePattern" spellcheck="false"></span></label>
+        <p class="preview">範例：<b id="note-preview">—</b></p>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>選項清單</h2>
+      <div class="grid2">
+        <label class="fld">麵粉種類（一行一種）<textarea data-set="flourTypes" id="set-flours" rows="6"></textarea></label>
+        <label class="fld">麵粉品牌（一行一個）<textarea data-set="brands" id="set-brands" rows="6"></textarea></label>
+      </div>
+      <p class="hint">名稱含「全麥」或「黑麥」算雜糧，含「T65」「T55」或「法國」算法國粉，含「高筋」算高筋，用來判斷配方分類。</p>
+    </section>
+
+    <section class="card">
+      <h2>常用材料</h2>
+      <div id="presets"></div>
+      <button class="btn btn-sm" data-act="add-preset">加一種常用材料</button>
+      <p class="hint">在「其他材料」輸入這些名稱時，會自動帶入分類與是否計入粉量、水量。</p>
+    </section>
+
+    <section class="card">
+      <h2>匯出與備份</h2>
+      <div class="export-list">
+        <div class="export-item"><div><strong>匯出到 Obsidian</strong><p>每筆一篇 Markdown，加上照片、總覽與總表 CSV，打包成 zip。</p></div><button class="btn btn-sm" data-act="export-zip">匯出 zip</button></div>
+        <div class="export-item"><div><strong>總表 CSV</strong><p>欄位和儀表板一致，可用 Excel 打開。</p></div><button class="btn btn-sm" data-act="export-csv">匯出 CSV</button></div>
+        <div class="export-item"><div><strong>完整備份（含照片）</strong><p id="backup-last">所有紀錄、照片與設定。iPhone 匯出後用 AirDrop 傳到 Mac 匯入。</p></div><button class="btn btn-primary btn-sm" data-act="export-backup">匯出備份</button></div>
+        <div class="export-item"><div><strong>從備份匯入</strong><p>完整備份 zip，或舊版的 JSON 備份。同一筆以修改時間較新的為準，匯入前會先確認。</p></div><button class="btn btn-sm" data-act="import-backup">選擇檔案</button></div>
+        <div class="export-item"><div><strong>自動備份</strong><p id="autobackup-text">升級前與第一次同步前，會自動建立一份完整備份（含照片）。</p></div><div class="btn-col"><button class="btn btn-sm" data-act="open-backups" data-dir="自動備份" id="btn-open-backups">打開備份資料夾</button><button class="btn btn-sm btn-ghost" data-act="open-backups" data-dir="衝突備份" id="btn-open-conflicts">衝突備份</button></div></div>
+        <div class="export-item"><div><strong>匯入舊版照片</strong><p>先匯入舊版 JSON 備份，再選舊版「匯出到 Obsidian」的 zip，照片會依檔名對回紀錄。</p></div><button class="btn btn-sm" data-act="import-v1zip">選擇 zip</button></div>
+      </div>
+      <input type="file" accept=".zip,.json,application/zip,application/json" id="file-backup" hidden>
+      <input type="file" accept=".zip,application/zip" id="file-v1zip" hidden>
+    </section>
+
+    <p class="about" id="about"></p>
+  </section>
+</main>
+
+<nav class="nav" aria-label="主選單">
+  <div class="nav-in">
+    <button class="nav-tab" data-view="list" aria-current="page">紀錄</button>
+    <button class="nav-new" data-act="new" aria-label="新紀錄">+</button>
+    <button class="nav-tab" data-view="settings">設定</button>
+  </div>
+</nav>
+
+<div class="modal-back" id="modal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <h2 id="modal-title"></h2>
+    <div id="modal-body"></div>
+    <div class="modal-btns" id="modal-btns"></div>
+  </div>
+</div>
+<div class="viewer" id="viewer" hidden><img alt="" id="viewer-img"><button class="viewer-close" data-act="close-viewer" aria-label="關閉">×</button></div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script src="./app.js"></script>
+</body>
+</html>

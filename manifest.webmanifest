@@ -1,0 +1,13 @@
+{
+  "name": "烘焙紀錄本",
+  "short_name": "烘焙紀錄",
+  "lang": "zh-Hant-TW",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#EDF0EB",
+  "theme_color": "#2E6B5B",
+  "icons": [
+    { "src": "./icons/icon.png", "sizes": "any", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
